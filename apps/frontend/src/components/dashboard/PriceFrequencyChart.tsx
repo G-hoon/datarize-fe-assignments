@@ -24,6 +24,7 @@ export function PriceFrequencyChart({
 		startDate: null,
 		endDate: null,
 	});
+	const [datePickerError, setDatePickerError] = useState<string | null>(null);
 
 	// React Query를 사용한 데이터 패칭 (날짜 범위가 변경되면 자동으로 재요청)
 	const { data, isLoading, error } = usePurchaseFrequency({
@@ -31,9 +32,43 @@ export function PriceFrequencyChart({
 		...(dateRange.endDate && { to: dateRange.endDate }),
 	});
 
+	/**
+	 * 숫자를 한국어 단위로 변환 (만원 단위)
+	 */
+	const formatPriceToKorean = (price: number): string => {
+		if (price === 0) return "0원";
+		
+		if (price >= 10000) {
+			const manWon = price / 10000;
+			return manWon % 1 === 0 ? `${manWon}만원` : `${manWon.toFixed(1)}만원`;
+		}
+		
+		return `${price.toLocaleString()}원`;
+	};
+
+	/**
+	 * "0 - 20000" 또는 "20001 - 30000" 형식의 range를 "0원 ~ 2만원" 형식으로 변환
+	 */
+	const formatRangeToKorean = (range: string): string => {
+		// "0 - 20000" 또는 "20001 - 30000" 형식 파싱
+		const match = range.match(/(\d+)\s*-\s*(\d+)/);
+		
+		if (!match) return range; // 파싱 실패 시 원본 반환
+		
+		let start = parseInt(match[1], 10);
+		const end = parseInt(match[2], 10);
+		
+		// 20001처럼 연속 범위인 경우 자연스럽게 표시 (20001 → 2만원)
+		if (start > 0 && (start % 10000 === 1 || start % 1000 === 1)) {
+			start = start - 1;
+		}
+		
+		return `${formatPriceToKorean(start)} ~ ${formatPriceToKorean(end)}`;
+	};
+
 	const processChartData = (rawData: PurchaseFrequency[]) => {
 		return rawData.map((item) => ({
-			range: item.range,
+			range: formatRangeToKorean(item.range),
 			count: item.count,
 		}));
 	};
@@ -53,9 +88,15 @@ export function PriceFrequencyChart({
 						<DateRangePicker
 							value={dateRange}
 							onChange={setDateRange}
+							onError={setDatePickerError}
 							placeholder="기간을 선택해주세요"
 							disabled={isLoading}
 						/>
+						{datePickerError && (
+							<div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+								<p className="text-sm text-red-600">{datePickerError}</p>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>

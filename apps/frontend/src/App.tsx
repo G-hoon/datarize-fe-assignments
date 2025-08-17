@@ -9,6 +9,7 @@ function App() {
 			queries: {
 				staleTime: 5 * 60 * 1000, // 5분
 				gcTime: 10 * 60 * 1000, // 10분
+				retry: false, // 재시도 비활성화
 			},
 		},
 	});

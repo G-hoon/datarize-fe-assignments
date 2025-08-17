@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { Calendar, ChevronDown } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 export interface DateRange {
 	startDate: string | null;
@@ -12,6 +12,7 @@ interface DateRangePickerProps {
 	onChange: (dateRange: DateRange) => void;
 	placeholder?: string;
 	disabled?: boolean;
+	onError?: (error: string | null) => void;
 }
 
 /**
@@ -23,11 +24,22 @@ export function DateRangePicker({
 	onChange,
 	placeholder = "날짜를 선택해주세요",
 	disabled = false,
+	onError,
 }: DateRangePickerProps) {
 	const [isOpen, setIsOpen] = useState(false);
+	const [tempDateRange, setTempDateRange] = useState<DateRange>(value);
+	const [error, setError] = useState<string | null>(null);
 	const pickerId = useId();
 	const startDateId = useId();
 	const endDateId = useId();
+
+	// 드롭다운이 열릴 때 현재 값으로 tempDateRange 초기화
+	useEffect(() => {
+		if (isOpen) {
+			setTempDateRange(value);
+			setError(null);
+		}
+	}, [isOpen, value]);
 
 	const getTodayString = () => {
 		return dayjs().format("YYYY-MM-DD");
@@ -57,22 +69,55 @@ export function DateRangePicker({
 		return `~ ${formatDateForDisplay(value.endDate)}`;
 	};
 
-	const handleStartDateChange = (date: string) => {
-		const newValue = { ...value, startDate: date };
-		// 시작일이 종료일보다 뒤인 경우 종료일을 시작일로 설정
-		if (newValue.endDate && dayjs(date).isAfter(dayjs(newValue.endDate))) {
-			newValue.endDate = date;
+	const validateDateRange = (dateRange: DateRange): string | null => {
+		const { startDate, endDate } = dateRange;
+		
+		if (startDate && endDate) {
+			if (dayjs(startDate).isAfter(dayjs(endDate))) {
+				return "시작일이 종료일보다 늦을 수 없습니다";
+			}
 		}
-		onChange(newValue);
+		
+		if (startDate && dayjs(startDate).isAfter(dayjs())) {
+			return "시작일은 오늘보다 늦을 수 없습니다";
+		}
+		
+		if (endDate && dayjs(endDate).isAfter(dayjs())) {
+			return "종료일은 오늘보다 늦을 수 없습니다";
+		}
+		
+		return null;
+	};
+
+	const handleStartDateChange = (date: string) => {
+		const newValue = { ...tempDateRange, startDate: date };
+		setTempDateRange(newValue);
+		
+		const validationError = validateDateRange(newValue);
+		setError(validationError);
 	};
 
 	const handleEndDateChange = (date: string) => {
-		const newValue = { ...value, endDate: date };
-		// 종료일이 시작일보다 앞인 경우 시작일을 종료일로 설정
-		if (newValue.startDate && dayjs(date).isBefore(dayjs(newValue.startDate))) {
-			newValue.startDate = date;
+		const newValue = { ...tempDateRange, endDate: date };
+		setTempDateRange(newValue);
+		
+		const validationError = validateDateRange(newValue);
+		setError(validationError);
+	};
+
+	const handleConfirm = () => {
+		const validationError = validateDateRange(tempDateRange);
+		
+		if (validationError) {
+			setError(validationError);
+			onError?.(validationError);
+			return;
 		}
-		onChange(newValue);
+		
+		setError(null);
+		onError?.(null);
+		onChange(tempDateRange);
+		setIsOpen(false);
 	};
 
 	const applyPreset = (preset: "today" | "week" | "month" | "all") => {
@@ -101,12 +146,23 @@ export function DateRangePicker({
 			}
 		}
 
-		onChange({ startDate, endDate });
+		const newDateRange = { startDate, endDate };
+		setTempDateRange(newDateRange);
+		setError(null);
+		onChange(newDateRange);
 		setIsOpen(false);
 	};
 
 	const handleReset = () => {
-		onChange({ startDate: null, endDate: null });
+		const resetRange = { startDate: null, endDate: null };
+		setTempDateRange(resetRange);
+		setError(null);
+	};
+
+	const handleCancel = () => {
+		setTempDateRange(value);
+		setError(null);
+		setIsOpen(false);
 	};
 
 	return (
@@ -190,7 +246,7 @@ export function DateRangePicker({
 								<input
 									id={startDateId}
 									type="date"
-									value={value.startDate || ""}
+									value={tempDateRange.startDate || ""}
 									onChange={(e) => handleStartDateChange(e.target.value)}
 									max={getTodayString()}
 									className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -206,14 +262,21 @@ export function DateRangePicker({
 								<input
 									id={endDateId}
 									type="date"
-									value={value.endDate || ""}
+									value={tempDateRange.endDate || ""}
 									onChange={(e) => handleEndDateChange(e.target.value)}
-									min={value.startDate || undefined}
+									min={tempDateRange.startDate || undefined}
 									max={getTodayString()}
 									className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 								/>
 							</div>
 						</div>
+
+						{/* 에러 메시지 */}
+						{error && (
+							<div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+								<p className="text-sm text-red-600">{error}</p>
+							</div>
+						)}
 
 						{/* 액션 버튼들 */}
 						<div className="flex justify-between mt-4 pt-3 border-t border-gray-200">
@@ -224,13 +287,27 @@ export function DateRangePicker({
 							>
 								초기화
 							</button>
-							<button
-								type="button"
-								onClick={() => setIsOpen(false)}
-								className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-white hover:text-blue-600 border border-blue-700 rounded-md"
-							>
-								확인
-							</button>
+							<div className="flex gap-2">
+								<button
+									type="button"
+									onClick={handleCancel}
+									className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 border border-gray-300 rounded-md"
+								>
+									취소
+								</button>
+								<button
+									type="button"
+									onClick={handleConfirm}
+									disabled={!!error}
+									className={`px-4 py-2 text-sm rounded-md border ${
+										error
+											? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
+											: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+									}`}
+								>
+									확인
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>

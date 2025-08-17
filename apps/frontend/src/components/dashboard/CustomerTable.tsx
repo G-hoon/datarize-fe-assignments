@@ -27,10 +27,22 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 	// 검색어 디바운스 (500ms)
 	const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-	const { data, isLoading, error } = useCustomers({
+	const {
+		data: rawData,
+		isLoading,
+		error,
+	} = useCustomers({
 		...(debouncedSearchTerm && { name: debouncedSearchTerm }),
 		...(sortField === "totalAmount" && { sortBy: sortOrder }),
 	});
+
+	// ID 정렬은 클라이언트에서 처리 (서버는 totalAmount만 정렬)
+	const data =
+		rawData && sortField === "id"
+			? [...rawData].sort((a, b) =>
+					sortOrder === "asc" ? a.id - b.id : b.id - a.id,
+				)
+			: rawData;
 
 	const handleSort = (field: SortField) => {
 		if (sortField === field) {
@@ -91,8 +103,13 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 				<table className="w-full">
 					<thead className="bg-gray-50">
 						<tr>
-							<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-								고객 ID
+							<th
+								className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+								onClick={() => handleSort("id")}
+							>
+								<div className="flex items-center gap-1">
+									고객 ID {getSortIcon("id")}
+								</div>
 							</th>
 							<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 								고객명
@@ -124,8 +141,23 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 						)}
 						{error && (
 							<tr>
-								<td colSpan={4} className="px-6 py-12 text-center text-red-500">
-									데이터를 불러오는 중 오류가 발생했습니다: {error?.toString()}
+								<td colSpan={4} className="px-6 py-12 text-center">
+									{error?.message?.includes("Customer not found") ||
+									error?.message?.includes("404") ? (
+										<div>
+											<span className="text-gray-700 font-semibold">
+												"{debouncedSearchTerm}"
+											</span>
+											<span className="text-gray-500">
+												에 대한 검색 결과를 찾을 수 없습니다
+											</span>
+										</div>
+									) : (
+										<span className="text-red-500">
+											데이터를 불러오는 중 오류가 발생했습니다
+											<br /> {error?.toString()}
+										</span>
+									)}
 								</td>
 							</tr>
 						)}

@@ -3,8 +3,10 @@ import { create } from "zustand";
 
 interface ModalInstance {
 	id: string;
-	component: ComponentType<unknown>;
-	props: object;
+	// biome-ignore lint/suspicious/noExplicitAny: 모달 컴포넌트 타입
+	component: ComponentType<any>;
+	// biome-ignore lint/suspicious/noExplicitAny: 모달 컴포넌트 props
+	props: any;
 	closeOnDimmedClick?: boolean;
 }
 
