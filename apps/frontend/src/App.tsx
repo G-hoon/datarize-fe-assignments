@@ -3,7 +3,14 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import DashBoard from "./pages/DashBoard";
 
 function App() {
-	const queryClient = new QueryClient();
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				staleTime: 5 * 60 * 1000, // 5분
+				gcTime: 10 * 60 * 1000, // 10분
+			},
+		},
+	});
 	return (
 		<QueryClientProvider client={queryClient}>
 			<BrowserRouter

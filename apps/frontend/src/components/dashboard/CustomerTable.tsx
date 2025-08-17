@@ -24,17 +24,11 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 	// 검색어 디바운스 (500ms)
 	const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-	// API 호출 - 구매 금액 정렬은 서버에서 처리
 	const { data, isLoading, error } = useCustomers({
 		...(debouncedSearchTerm && { name: debouncedSearchTerm }),
 		...(sortField === "totalAmount" && { sortBy: sortOrder }),
 	});
 
-	console.log("data", data);
-
-	/**
-	 * 정렬 기준 변경 핸들러
-	 */
 	const handleSort = (field: SortField) => {
 		if (sortField === field) {
 			setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -44,21 +38,6 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 		}
 	};
 
-	/**
-	 * 클라이언트 사이드 정렬 (ID 정렬만 클라이언트에서 처리)
-	 */
-	const sortedCustomers = data?.data
-		? sortField === "id"
-			? [...data.data].sort((a, b) => {
-					const result = a.id - b.id;
-					return sortOrder === "asc" ? result : -result;
-				})
-			: data.data // 구매 금액 정렬은 서버에서 이미 처리됨
-		: [];
-
-	/**
-	 * 정렬 아이콘 렌더링
-	 */
 	const getSortIcon = (field: SortField) => {
 		if (sortField !== field) {
 			return <ArrowUpDown className="w-4 h-4" />;
@@ -69,30 +48,6 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 			<ArrowDown className="w-4 h-4" />
 		);
 	};
-
-	/**
-	 * 빈 상태 렌더링
-	 */
-	const renderEmptyState = () => (
-		<tr>
-			<td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-				{debouncedSearchTerm
-					? `"${debouncedSearchTerm}"에 대한 검색 결과가 없습니다`
-					: "등록된 고객이 없습니다"}
-			</td>
-		</tr>
-	);
-
-	/**
-	 * 에러 상태 렌더링
-	 */
-	const renderErrorState = () => (
-		<tr>
-			<td colSpan={4} className="px-6 py-12 text-center text-red-500">
-				데이터를 불러오는 중 오류가 발생했습니다: {error?.toString()}
-			</td>
-		</tr>
-	);
 
 	return (
 		<div className="bg-white rounded-lg shadow">
@@ -155,14 +110,28 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 								</td>
 							</tr>
 						)}
-						{error && renderErrorState()}
+						{error && (
+							<tr>
+								<td colSpan={4} className="px-6 py-12 text-center text-red-500">
+									데이터를 불러오는 중 오류가 발생했습니다: {error?.toString()}
+								</td>
+							</tr>
+						)}
+						{!isLoading && !error && data?.data?.length === 0 && (
+							<tr>
+								<td
+									colSpan={4}
+									className="px-6 py-12 text-center text-gray-500"
+								>
+									{debouncedSearchTerm
+										? `"${debouncedSearchTerm}"에 대한 검색 결과가 없습니다`
+										: "등록된 고객이 없습니다"}
+								</td>
+							</tr>
+						)}
 						{!isLoading &&
 							!error &&
-							sortedCustomers.length === 0 &&
-							renderEmptyState()}
-						{!isLoading &&
-							!error &&
-							sortedCustomers.map((customer: Customer) => (
+							data?.data?.map((customer: Customer) => (
 								<tr
 									key={customer.id}
 									className="hover:bg-gray-50 cursor-pointer transition-colors"
@@ -188,7 +157,7 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 			{/* 결과 카운트 */}
 			{!isLoading && !error && (
 				<div className="px-6 py-4 border-t border-gray-200 text-sm text-gray-500">
-					총 {sortedCustomers.length}명의 고객
+					총 {data?.data?.length}명의 고객
 				</div>
 			)}
 		</div>

@@ -11,7 +11,5 @@ export function useCustomers(params?: FetchCustomersParams) {
 	return useQuery({
 		queryKey: ["customers", params?.name, params?.sortBy],
 		queryFn: () => fetchCustomers(params),
-		staleTime: 5 * 60 * 1000, // 5분
-		gcTime: 10 * 60 * 1000, // 10분
 	});
 }
