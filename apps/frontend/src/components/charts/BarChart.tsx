@@ -15,7 +15,6 @@ export interface BarChartData {
 
 interface BarChartProps {
 	data: BarChartData[];
-	title?: string;
 	yAxisLabel?: string;
 	height?: number;
 	loading?: boolean;
@@ -27,7 +26,6 @@ interface BarChartProps {
  */
 export function BarChart({
 	data,
-	title,
 	yAxisLabel = "구매 건수",
 	height = 400,
 	loading = false,
@@ -56,10 +54,7 @@ export function BarChart({
 
 	return (
 		<div className="w-full">
-			{title && (
-				<h3 className="text-lg font-semibold mb-4 text-gray-800">{title}</h3>
-			)}
-			<div className="bg-white p-4 rounded-lg border shadow-sm">
+			<div className="bg-white rounded-lg pt-4 border shadow-sm">
 				<ResponsiveContainer width="100%" height={height}>
 					<RechartsBarChart
 						data={data}
