@@ -110,7 +110,7 @@ export function DateRangePicker({
 	};
 
 	return (
-		<div className="relative">
+		<div className="relative min-w-[330px]">
 			{/* 날짜 선택 버튼 */}
 			<button
 				id={pickerId}
