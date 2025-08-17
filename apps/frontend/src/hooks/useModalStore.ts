@@ -1,11 +1,10 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: 모달 상태 관리 */
 import type { ComponentType } from "react";
 import { create } from "zustand";
 
 interface ModalInstance {
 	id: string;
-	component: ComponentType<any>;
-	props: any;
+	component: ComponentType<unknown>;
+	props: object;
 	closeOnDimmedClick?: boolean;
 }
 
@@ -15,7 +14,6 @@ interface ModalStore {
 	currentModalId: string | null;
 	showModal: (modalConfig: Omit<ModalInstance, "id">) => string;
 	hideModal: (fromPopState?: boolean) => void;
-	updateModal: (newProps: any) => void;
 }
 
 export const useModalStore = create<ModalStore>((set, get) => ({
@@ -60,18 +58,6 @@ export const useModalStore = create<ModalStore>((set, get) => ({
 			if (currentState?.isModal) {
 				window.history.back();
 			}
-		}
-	},
-
-	updateModal: (newProps) => {
-		const { currentModal } = get();
-		if (currentModal) {
-			set({
-				currentModal: {
-					...currentModal,
-					props: { ...currentModal.props, ...newProps },
-				},
-			});
 		}
 	},
 }));
