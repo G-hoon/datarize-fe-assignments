@@ -5,7 +5,7 @@ import type {
 	FetchCustomersParams,
 	FetchPurchaseFrequencyParams,
 	PurchaseFrequency,
-} from "../types/api";
+} from "@/types/api";
 
 const BASE_URL = "http://localhost:4000/api";
 

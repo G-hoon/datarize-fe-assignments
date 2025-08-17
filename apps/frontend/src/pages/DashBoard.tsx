@@ -1,4 +1,4 @@
-import { BarChart } from "../components/charts/BarChart";
+import { BarChart } from "@/components/charts/BarChart";
 
 // 테스트 목업 데이터
 const mockChartData = [
