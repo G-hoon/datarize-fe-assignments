@@ -143,11 +143,17 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 							</th>
 						</tr>
 					</thead>
+
 					<tbody className="bg-white divide-y divide-gray-200 relative">
-						{isLoading && (
-							<div className="px-6 py-24 min-h-[200px] h-full flex justify-center items-center absolute top-0 left-0 w-full z-10 bg-white/50">
-								<div className="inline-block w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-							</div>
+						{true && (
+							<tr>
+								<td
+									colSpan={4}
+									className="px-6 py-6 min-h-[200px] h-full flex justify-center items-center absolute top-0 left-0 w-full z-10 bg-white/50"
+								>
+									<div className="inline-block w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+								</td>
+							</tr>
 						)}
 						{error && renderErrorState()}
 						{!isLoading &&
