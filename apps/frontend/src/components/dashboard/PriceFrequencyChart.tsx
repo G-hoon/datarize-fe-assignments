@@ -39,7 +39,7 @@ export function PriceFrequencyChart({
 	};
 
 	// 처리된 차트 데이터
-	const chartData = data?.data ? processChartData(data.data) : [];
+	const chartData = data ? processChartData(data) : [];
 
 	return (
 		<div className="bg-white rounded-lg shadow">

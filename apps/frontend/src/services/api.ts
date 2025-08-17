@@ -2,6 +2,7 @@ import type {
 	ApiError,
 	ApiResponse,
 	Customer,
+	CustomerPurchase,
 	FetchCustomersParams,
 	FetchPurchaseFrequencyParams,
 	PurchaseFrequency,
@@ -10,41 +11,23 @@ import type {
 const BASE_URL = "http://localhost:4000/api";
 
 /**
- * 에러 핸들링을 포함한 범용 API 호출 래퍼 함수
+ * React Query용 API 호출 함수 (에러 시 Promise reject)
  * @param endpoint API 엔드포인트 경로
- * @returns API 응답 데이터와 에러, 로딩 상태를 포함한 객체
+ * @returns API 응답 데이터 (에러 시 throw)
  */
-async function apiCall<T>(endpoint: string): Promise<ApiResponse<T>> {
-	try {
-		const response = await fetch(`${BASE_URL}${endpoint}`);
+async function apiCall<T>(endpoint: string): Promise<T> {
+	const response = await fetch(`${BASE_URL}${endpoint}`);
+	const data = await response.json();
 
-		if (!response.ok) {
-			const errorData: ApiError = {
-				message: `HTTP ${response.status}: ${response.statusText}`,
-				status: response.status,
-			};
-			return {
-				data: null,
-				error: errorData.message,
-				loading: false,
-			};
-		}
-
-		const data = await response.json();
-		return {
-			data,
-			error: null,
-			loading: false,
+	if (!response.ok) {
+		const errorData: ApiError = {
+			message: data.error ?? `HTTP ${response.status}: ${response.statusText}`,
+			status: response.status,
 		};
-	} catch (error) {
-		const errorMessage =
-			error instanceof Error ? error.message : "Unknown error occurred";
-		return {
-			data: null,
-			error: errorMessage,
-			loading: false,
-		};
+		throw new Error(errorData.message);
 	}
+
+	return data;
 }
 
 /**
@@ -54,7 +37,7 @@ async function apiCall<T>(endpoint: string): Promise<ApiResponse<T>> {
  */
 export async function fetchPurchaseFrequency(
 	params?: FetchPurchaseFrequencyParams,
-): Promise<ApiResponse<PurchaseFrequency[]>> {
+): Promise<PurchaseFrequency[]> {
 	const searchParams = new URLSearchParams();
 
 	if (params?.from) {
@@ -75,7 +58,7 @@ export async function fetchPurchaseFrequency(
  */
 export async function fetchCustomers(
 	params?: FetchCustomersParams,
-): Promise<ApiResponse<Customer[]>> {
+): Promise<Customer[]> {
 	const searchParams = new URLSearchParams();
 
 	if (params?.sortBy) {
@@ -89,6 +72,20 @@ export async function fetchCustomers(
 	return apiCall<Customer[]>(endpoint);
 }
 
+/**
+ * 특정 고객의 구매 내역을 조회합니다
+ * @param customerId 고객 ID
+ * @returns 고객 구매 내역 데이터 배열
+ */
+export async function fetchCustomerPurchases(
+	customerId: number | null,
+): Promise<CustomerPurchase[]> {
+	if (customerId === null) {
+		throw new Error("Customer ID is required");
+	}
+	const endpoint = `/customers/${customerId}/purchases`;
+	return apiCall<CustomerPurchase[]>(endpoint);
+}
 
 /**
  * 초기 로딩 상태를 생성하는 헬퍼 함수

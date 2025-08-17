@@ -1,7 +1,9 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useState } from "react";
+import { CustomerDetailModal } from "@/components/dashboard/CustomerDetailModal";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useModalStore } from "@/hooks/useModalStore";
 import type { Customer } from "@/types/api";
 
 type SortField = "id" | "totalAmount";
@@ -17,6 +19,7 @@ interface CustomerTableProps {
  * 검색, 정렬 기능을 포함합니다
  */
 export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
+	const { showModal } = useModalStore();
 	const [searchTerm, setSearchTerm] = useState("");
 	const [sortField, setSortField] = useState<SortField>("id");
 	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -47,6 +50,15 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 		) : (
 			<ArrowDown className="w-4 h-4" />
 		);
+	};
+
+	const handleCustomerClick = (customer: Customer) => {
+		showModal({
+			component: CustomerDetailModal,
+			props: {
+				customer,
+			},
+		});
 	};
 
 	return (
@@ -100,7 +112,7 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 					</thead>
 
 					<tbody className="bg-white divide-y divide-gray-200 relative">
-						{true && (
+						{isLoading && (
 							<tr>
 								<td
 									colSpan={4}
@@ -117,7 +129,7 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 								</td>
 							</tr>
 						)}
-						{!isLoading && !error && data?.data?.length === 0 && (
+						{!isLoading && !error && (!data || data.length === 0) && (
 							<tr>
 								<td
 									colSpan={4}
@@ -131,9 +143,10 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 						)}
 						{!isLoading &&
 							!error &&
-							data?.data?.map((customer: Customer) => (
+							data?.map((customer: Customer) => (
 								<tr
 									key={customer.id}
+									onClick={() => handleCustomerClick(customer)}
 									className="hover:bg-gray-50 cursor-pointer transition-colors"
 								>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -157,7 +170,7 @@ export function CustomerTable({ title = "고객 목록" }: CustomerTableProps) {
 			{/* 결과 카운트 */}
 			{!isLoading && !error && (
 				<div className="px-6 py-4 border-t border-gray-200 text-sm text-gray-500">
-					총 {data?.data?.length}명의 고객
+					총 {data?.length || 0}명의 고객
 				</div>
 			)}
 		</div>

@@ -23,7 +23,7 @@ export function usePurchaseFrequency(params?: FetchPurchaseFrequencyParams) {
 		? {
 				...(params.from && { from: formatDateToISO(params.from) }),
 				...(params.to && { to: formatDateToISO(params.to) }),
-		  }
+		}
 		: undefined;
 
 	return useQuery({

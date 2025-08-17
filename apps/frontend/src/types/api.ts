@@ -11,6 +11,14 @@ export interface PurchaseFrequency {
 	count: number;
 }
 
+export interface CustomerPurchase {
+	date: string;
+	quantity: number;
+	product: string;
+	price: number;
+	imgSrc: string;
+}
+
 // API Request Types
 export interface FetchPurchaseFrequencyParams {
 	from?: string;

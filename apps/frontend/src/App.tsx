@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { ModalRenderer } from "./components/ui/ModalRenderer";
 import DashBoard from "./pages/DashBoard";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
 			<BrowserRouter
 				future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
 			>
+				<ModalRenderer />
 				<Routes>
 					<Route path="/" element={<DashBoard />} />
 				</Routes>
